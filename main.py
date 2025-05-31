@@ -2,6 +2,7 @@ import streamlit as st
 import smtplib 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText 
+from email.mime.application import MIMEApplication
 from dotenv import load_dotenv
 import os
 
@@ -52,6 +53,7 @@ load_dotenv()
 sender_email = os.getenv("sender_email")
 password = os.getenv("password")
 
+
 # Title and description
 st.title("📧 Email Sender")
 st.markdown("Send emails easily using this interface!")
@@ -62,6 +64,9 @@ with st.form("email_form"):
     receiver_email = st.text_input("Recipient Email Address")
     subject = st.text_input("Subject", "Automated Email Subject")
     message = st.text_area("Message", height=200)
+    
+    # File attachment
+    uploaded_file = st.file_uploader("Attach a file", type=['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png'])
     
     # Send button
     submit_button = st.form_submit_button("Send Email")
@@ -77,6 +82,15 @@ with st.form("email_form"):
                 msg['To'] = receiver_email
                 msg['Subject'] = subject
                 msg.attach(MIMEText(message, 'plain'))
+
+                for i in uploaded_file or []: # Attach file if one was uploaded
+                    if uploaded_file is not None:
+                        # Read the file
+                        file_bytes = uploaded_file.getvalue()
+                        # Create attachment
+                        attachment = MIMEApplication(file_bytes, _subtype=uploaded_file.type)
+                        attachment.add_header('Content-Disposition', 'attachment', filename=uploaded_file.name)
+                        msg.attach(attachment)
 
                 # Send email
                 server = smtplib.SMTP('smtp.gmail.com', 587)
@@ -96,5 +110,6 @@ st.markdown("""
 1. Enter the recipient's email address
 2. Add a subject (optional)
 3. Write your message
-4. Click 'Send Email' to send
+4. Attach a file (optional)
+5. Click 'Send Email' to send
 """)
